@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Report</title>
+</head>
+<body>
+    <h1>Security Questions</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Category</th>
+                <th>Priority</th>
+                <th>Text</th>
+                <th>Guidance</th>
+                <th>LLM Response</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for question in questions %}
+            <tr>
+                <td>{{ question.id }}</td>
+                <td>{{ question.category }}</td>
+                <td>{{ question.priority }}</td>
+                <td>{{ question.text }}</td>
+                <td>{{ question.guidance }}</td>
+                <td>{{ question.llm_response }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

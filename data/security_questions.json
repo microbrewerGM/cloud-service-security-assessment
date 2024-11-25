@@ -1,0 +1,31 @@
+{
+    "questions": [
+        {
+            "id": "Q1",
+            "category": "Data Security",
+            "priority": "High",
+            "text": "Does the service provide encryption for data at rest?",
+            "guidance": "Look for information on default encryption standards."
+        },
+        {
+            "id": "Q2",
+            "text": "What components of the service are public by default?",
+            "category": "Access Control",
+            "guidance": "Any cloud resource that is publically accessible by default must have security controls in place to block unauthorized and annonymous access."
+        },
+        {
+            "id": "Q3",
+            "category": "Data Security",
+            "priority": "Critical",
+            "text": "Does the service provide encryption for data in transit?",
+            "guidance": "Data should only be transmitted over networks via an encrypted method, such as TLSv1.2 or higher."
+        },
+        {
+            "id": "Q4",
+            "category": "Data Security",
+            "priority": "Medium",
+            "text": "How would the service be operated in a global, financial service organization?",
+            "guidance": "Provide an overall listing of the security risks and their mitigating controls in a global, financial service organization."
+        }
+    ]
+}
