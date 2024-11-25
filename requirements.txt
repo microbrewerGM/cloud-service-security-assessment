@@ -1,4 +1,6 @@
-requests
-pytest
-PyMuPDF
 python-dotenv
+beautifulsoup4
+jinja2
+PyMuPDF
+chromadb
+langchain-ollama
