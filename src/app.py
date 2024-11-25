@@ -5,13 +5,17 @@ import time  # Ensure time is imported
 from dotenv import load_dotenv
 from src.llm_interaction import interact_with_llm
 from src.utils import render_html, PDFChromaLoader, load_security_questions
+from bs4 import BeautifulSoup
+
+load_dotenv()  # Load environment variables from .env file
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("app.log"),
+        # logging.FileHandler("app.log"),
+        logging.FileHandler(os.getenv('LOG_PATH')),
         logging.StreamHandler()
     ]
 )
@@ -75,12 +79,8 @@ def generate_html_report():
 
     # Iterate through each question and get the LLM response
     for question in questions:
-        # Debugging: Check the type of question
-        logging.info(f"Processing question: {question} (type: {type(question)})")
-
-        # Ensure question is a dictionary and has 'text'
+        logging.info(f"Processing question ID {question.get('id')}: {question.get('text')}")
         if isinstance(question, dict) and 'text' in question:
-            logging.info(f"Processing question text: {question['text']}")
             try:
                 llm_response = interact_with_llm(question['text'])
                 question['llm_response'] = llm_response  # Add the LLM response to the question dict
@@ -92,10 +92,38 @@ def generate_html_report():
             logging.error(f"Invalid question format: {question}")
             question['llm_response'] = "Invalid question format."
 
-    # Load the HTML template with updated questions
+    # Extract 'Request' text from the template
+    template_dir = os.getenv('TEMPLATE_DIR', 'data/templates')
     template_name = os.getenv('TEMPLATE_NAME', 'report_template.html')
+    template_path = os.path.join(template_dir, template_name)
+    request_text = extract_request_from_template(template_path)
+
+    if request_text:
+        # Format the request as '<p><b>Request:</b> text</p>'
+        formatted_request = f"<p><b>Request:</b> {request_text}</p>"
+        logging.info(f"Formatted Request for LLM: {formatted_request}")
+
+        # Send the formatted request to LLM
+        try:
+            llm_risk_overview = interact_with_llm(formatted_request)
+            risk_overview = {
+                "llm_response": llm_risk_overview
+            }
+            logging.info("LLM response for risk overview added successfully.")
+        except Exception as e:
+            logging.error(f"Failed to get LLM response for risk overview: {e}")
+            risk_overview = {
+                "llm_response": "Error retrieving response."
+            }
+    else:
+        logging.error("No request text extracted. Skipping risk overview LLM query.")
+        risk_overview = {
+            "llm_response": "No request provided."
+        }
+
+    # Load the HTML template with updated questions and risk overview
     try:
-        html_content = render_html(template_name, questions)
+        html_content = render_html(template_name, questions, risk_overview=risk_overview)
         logging.info("HTML content rendered successfully.")
     except Exception as e:
         logging.error(f"Error rendering HTML content: {e}")
@@ -105,7 +133,7 @@ def generate_html_report():
     timestamp = time.strftime("%Y%m%d_%H%M%S")  # Format: YYYYMMDD_HHMMSS
 
     # Define the output directory and ensure it exists
-    output_dir = os.getenv('OUTPUT_DIR', 'output')
+    output_dir = os.getenv('OUTPUT_DIR')
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         logging.info(f"Created output directory: {output_dir}")
@@ -114,14 +142,55 @@ def generate_html_report():
     output_file_path = os.path.join(output_dir, f'report_{timestamp}.html')  # Change to .pdf if needed
 
     try:
-        with open(output_file_path, 'w') as f:
+        with open(output_file_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
         logging.info(f"Report generated successfully at {output_file_path}")
     except Exception as e:
         logging.error(f"Failed to write HTML report: {e}")
 
+def extract_request_from_template(template_path):
+    """
+    Extracts the text within the <h4>Request</h4><p>text</p> elements from the HTML template.
+
+    :param template_path: Path to the HTML template file.
+    :return: Extracted request text or None if not found.
+    """
+    try:
+        with open(template_path, 'r', encoding='utf-8') as file:
+            soup = BeautifulSoup(file, 'html.parser')
+
+        # Locate the Security Review Details section
+        section = soup.find('section', {'id': 'security-review-details'})
+        if not section:
+            logging.error("Section with id 'security-review-details' not found in template.")
+            return None
+
+        # Find the <h4>Request</h4> tag
+        request_header = section.find('h4', string='Request')
+        if not request_header:
+            logging.error("<h4>Request</h4> tag not found in 'security-review-details' section.")
+            return None
+
+        # The next sibling <p> tag contains the request text
+        request_paragraph = request_header.find_next_sibling('p')
+        if not request_paragraph:
+            logging.error("Paragraph containing the request text not found after <h4>Request</h4>.")
+            return None
+
+        request_text = request_paragraph.get_text(strip=True)
+        if not request_text:
+            logging.error("Request text is empty.")
+            return None
+
+        logging.info(f"Extracted request text: {request_text}")
+        return request_text
+
+    except Exception as e:
+        logging.error(f"Error extracting request from template: {e}")
+        return None
+    
 def main():
-    load_dotenv()  # Load environment variables from .env file
+    # load_dotenv()  # Load environment variables from .env file
 
     # Validate all dependencies before proceeding
     if not validate_dependencies():

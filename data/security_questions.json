@@ -19,13 +19,6 @@
             "priority": "Critical",
             "text": "Does the service provide encryption for data in transit?",
             "guidance": "Data should only be transmitted over networks via an encrypted method, such as TLSv1.2 or higher."
-        },
-        {
-            "id": "Q4",
-            "category": "Data Security",
-            "priority": "Medium",
-            "text": "How would the service be operated in a global, financial service organization?",
-            "guidance": "Provide an overall listing of the security risks and their mitigating controls in a global, financial service organization."
         }
     ]
 }

@@ -99,7 +99,7 @@ def load_security_questions(file_path):
         logging.error(f"Invalid JSON format in security questions file: {e}")
         raise
 
-def render_html(template_name, questions):
+def render_html(template_name, questions, risk_overview=None):
     logging.info(f"Loading template: {template_name}")
     try:
         template = env.get_template(template_name)
@@ -107,4 +107,17 @@ def render_html(template_name, questions):
     except Exception as e:
         logging.error(f"Error loading template: {e}")
         return ""  # Return an empty string or handle as needed
-    return template.render(questions=questions)
+
+    # Prepare the context for rendering
+    context = {
+        'questions': questions
+    }
+
+    if risk_overview:
+        context['risk_overview'] = risk_overview
+    else:
+        context['risk_overview'] = {
+            "llm_response": "No risk overview provided."
+        }
+
+    return template.render(context)

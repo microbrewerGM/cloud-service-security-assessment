@@ -26,4 +26,4 @@ def generate_llm_prompt(context, question):
         "Security Question: {question}\n\n"
         "Answer:"
     )
-    return prompt_template.format(context=context, question=question) 
+    return prompt_template.format(context=context, question=question)
